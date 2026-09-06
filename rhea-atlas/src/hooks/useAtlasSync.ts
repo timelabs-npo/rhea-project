@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAtlasStore } from '@/store/useAtlasStore';
-import { API_BASE } from '@/lib/config';
+import { API_BASE, IS_API_CONFIGURED } from '@/lib/config';
 
 export interface HealthState {
   providerCount: number;
@@ -26,9 +26,21 @@ export function getLastHealth(): HealthState {
 }
 
 export function useAtlasSync() {
-  const { setDMetric, updateIsland, setProviderCount, setRedisStatus, setApiHealthy, setAletheiaStats } = useAtlasStore();
+  const setters = useAtlasStore((s) => ({
+    setDMetric: s.setDMetric,
+    updateIsland: s.updateIsland,
+    setProviderCount: s.setProviderCount,
+    setRedisStatus: s.setRedisStatus,
+    setApiHealthy: s.setApiHealthy,
+    setAletheiaStats: s.setAletheiaStats,
+  }));
 
   useEffect(() => {
+    // Demo / offline mode: no backend configured — skip all network
+    if (!IS_API_CONFIGURED) return;
+
+    const { setDMetric, updateIsland, setProviderCount, setRedisStatus, setApiHealthy, setAletheiaStats } = setters;
+
     const fetchHealth = async () => {
       let rootData: Record<string, unknown> = {};
       let apiData: Record<string, unknown> = {};
@@ -146,6 +158,7 @@ export function useAtlasSync() {
           // non-JSON event payloads are expected in early relay versions
         }
       };
+      es.onerror = () => { es?.close(); es = null; };
     } catch {
       // SSE unsupported/unavailable — polling remains active
     }
@@ -179,5 +192,8 @@ export function useAtlasSync() {
       clearInterval(aletheiaInterval);
       es?.close();
     };
-  }, [setDMetric, updateIsland, setProviderCount, setRedisStatus, setApiHealthy, setAletheiaStats]);
+    // NOTE: Empty deps by design. Zustand setters are stable refs; we also skip
+    // all re-binding after first mount to avoid infinite re-run loops from any
+    // upstream selector re-stability issues.
+  }, []);
 }
