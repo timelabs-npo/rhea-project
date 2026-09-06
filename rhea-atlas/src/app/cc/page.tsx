@@ -11,8 +11,9 @@ const isTauri = typeof window !== 'undefined' && '__TAURI__' in window
 async function sendNotification(title: string, body: string) {
   if (!isTauri) return
   try {
+    const pluginPkg = ['@tauri-apps/', 'plugin-notification'].join('')
     const { isPermissionGranted, requestPermission, sendNotification: notify } =
-      await import('@tauri-apps/plugin-notification')
+      await import(/* @vite-ignore */ pluginPkg)
     let granted = await isPermissionGranted()
     if (!granted) granted = (await requestPermission()) === 'granted'
     if (granted) notify({ title, body })
@@ -22,8 +23,10 @@ async function sendNotification(title: string, body: string) {
 async function listenGlobalShortcut(handler: (key: string) => void) {
   if (!isTauri) return
   try {
-    const { listen } = await import('@tauri-apps/api/event')
-    listen<string>('global-shortcut', (e) => handler(e.payload))
+    const evPkg = ['@tauri-apps/api/', 'event'].join('')
+    const mod = await import(/* @vite-ignore */ evPkg)
+    const listen = mod.listen as (evt: string, cb: (e: { payload: string }) => void) => Promise<() => void>
+    await listen('global-shortcut', (e) => handler(e.payload))
   } catch { /* browser fallback — silent */ }
 }
 
