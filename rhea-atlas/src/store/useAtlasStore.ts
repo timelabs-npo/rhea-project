@@ -1,4 +1,5 @@
 import create from 'zustand';
+import type { DemoCaseId, PublishReceipt } from '@/demo/DemoRunner';
 
 export type ViewId = 'atlas-prime' | 'atlas-mesh' | 'theia-drift' | 'system-pw';
 
@@ -47,6 +48,17 @@ export interface AletheiaStats {
   uniqueQueries: number;
 }
 
+export interface DemoWarning {
+  text: string;
+  tone: 'danger' | 'ok';
+}
+
+export interface SphereOverrides {
+  glitchMultiplier: number;
+  colorOverride?: string;
+  severBeam: boolean;
+}
+
 export interface AtlasState {
   islands: Island[];
   consensusScore: number;
@@ -61,6 +73,10 @@ export interface AtlasState {
   showOceanusFlow: boolean;
   activeView: ViewId;
   aletheiaStats: AletheiaStats;
+  demoCase: DemoCaseId | null;
+  demoWarning: DemoWarning | null;
+  demoReceipts: PublishReceipt[];
+  sphereOverrides: SphereOverrides;
   setIslands: (islands: Island[]) => void;
   updateIsland: (id: string, delta: Partial<Island>) => void;
   setDMetric: (d: number) => void;
@@ -74,6 +90,10 @@ export interface AtlasState {
   toggleOceanusFlow: () => void;
   setActiveView: (v: ViewId) => void;
   setAletheiaStats: (stats: AletheiaStats) => void;
+  setDemoCase: (c: DemoCaseId | null) => void;
+  setDemoWarning: (w: DemoWarning | null) => void;
+  addDemoReceipt: (r: PublishReceipt) => void;
+  setSphereOverrides: (o: Partial<SphereOverrides>) => void;
 }
 
 export const useAtlasStore = create<AtlasState>((set) => ({
@@ -82,7 +102,7 @@ export const useAtlasStore = create<AtlasState>((set) => ({
     { id: '2', name: 'Mathematics', position: [3, 0, 0], complexity: 0.8, color: '#00ffff' },
   ],
   consensusScore: 94,
-  dMetric: 243.8,
+  dMetric: 0.22,
   activeIslandId: null,
   providerCount: 0,
   redisStatus: 'unknown',
@@ -93,6 +113,10 @@ export const useAtlasStore = create<AtlasState>((set) => ({
   showOceanusFlow: true,
   activeView: 'atlas-prime',
   aletheiaStats: { proofCount: 0, hypothesisCount: 0, totalArtifacts: 0, avgAgreement: 0, lastCapture: null, ontologyCount: 0, uniqueQueries: 0 },
+  demoCase: null,
+  demoWarning: null,
+  demoReceipts: [],
+  sphereOverrides: { glitchMultiplier: 1, severBeam: false },
   setIslands: (islands) => set({ islands }),
   updateIsland: (id, delta) => set((state) => ({
     islands: state.islands.map((is) => is.id === id ? { ...is, ...delta } : is)
@@ -103,7 +127,7 @@ export const useAtlasStore = create<AtlasState>((set) => ({
   setRedisStatus: (s) => set({ redisStatus: s }),
   setApiHealthy: (v) => set({ apiHealthy: v }),
   addSessionEntry: (entry) => set((state) => ({
-    sessionHistory: [entry, ...state.sessionHistory].slice(0, 50), // keep last 50
+    sessionHistory: [entry, ...state.sessionHistory].slice(0, 50),
     activeSessionId: entry.id,
   })),
   setActiveSession: (id) => set({ activeSessionId: id }),
@@ -111,4 +135,8 @@ export const useAtlasStore = create<AtlasState>((set) => ({
   toggleOceanusFlow: () => set((state) => ({ showOceanusFlow: !state.showOceanusFlow })),
   setActiveView: (v) => set({ activeView: v }),
   setAletheiaStats: (stats) => set({ aletheiaStats: stats }),
+  setDemoCase: (c) => set({ demoCase: c }),
+  setDemoWarning: (w) => set({ demoWarning: w }),
+  addDemoReceipt: (r) => set((state) => ({ demoReceipts: [r, ...state.demoReceipts].slice(0, 10) })),
+  setSphereOverrides: (o) => set((state) => ({ sphereOverrides: { ...state.sphereOverrides, ...o } })),
 }));
