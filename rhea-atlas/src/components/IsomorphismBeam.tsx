@@ -4,9 +4,15 @@ import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
+type Vec3Like = { x: number; y: number; z: number } | THREE.Vector3;
+
+function toVec3(v: Vec3Like): THREE.Vector3 {
+  return v instanceof THREE.Vector3 ? v : new THREE.Vector3(v.x, v.y, v.z);
+}
+
 interface IsomorphismBeamProps {
-  start: THREE.Vector3;
-  end: THREE.Vector3;
+  start: Vec3Like;
+  end: Vec3Like;
   color?: string;
   speed?: number;
 }
@@ -17,15 +23,17 @@ export default function IsomorphismBeam({
   color = '#00ffff',
   speed = 1.0,
 }: IsomorphismBeamProps) {
+  const startV = useMemo(() => toVec3(start), [start]);
+  const endV = useMemo(() => toVec3(end), [end]);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
 
   // Create curve between points
   const curve = useMemo(() => {
-    const midPoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-    const height = start.distanceTo(end) * 0.2;
+    const midPoint = new THREE.Vector3().addVectors(startV, endV).multiplyScalar(0.5);
+    const height = startV.distanceTo(endV) * 0.2;
     midPoint.y += height;
-    return new THREE.QuadraticBezierCurve3(start, midPoint, end);
-  }, [start, end]);
+    return new THREE.QuadraticBezierCurve3(startV, midPoint, endV);
+  }, [startV, endV]);
 
   const shaderMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
