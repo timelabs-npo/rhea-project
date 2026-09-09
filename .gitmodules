@@ -1,0 +1,6 @@
+[submodule "omnia-playbook"]
+	path = vendor/omnia/playbook
+	url = /tmp/omnia-playbook-inspect/omnia-playbook
+[submodule "omnia-vault"]
+	path = vendor/omnia/vault
+	url = /Users/sa/Documents/Documents - mio/timelabs-npo/omnia-vault
